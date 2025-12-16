@@ -213,4 +213,66 @@ main > .content-form .cart-item
 {
     margin-bottom: 2px !important;
 }
+/* Make the products area a clean responsive grid */
+.content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
 
+/* Product card container */
+.product {
+    background: #ffffff;
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    padding: 12px;
+    margin: 0; /* grid gap handles spacing */
+    box-shadow: 0 6px 16px rgba(0,0,0,.08);
+}
+/* Title */
+.product h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+}
+
+/* Layout row for image + price */
+.photo {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+/* Consistent image sizing */
+.photo img {
+    width: 110px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+/* Price aligned nicely */
+.price {
+    margin-left: auto;
+    font-weight: 900;
+    color: #00ff41;
+    font-size: 1.3rem;
+}
+
+/* Clamp description so cards stay even height */
+.product p {
+    margin-top: 10px;
+    margin-bottom: 0;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 3;     /* show max 3 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+/* Button area */
+.add-button {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 12px;
+}
