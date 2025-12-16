@@ -14,14 +14,20 @@
         <label for="min-price" class="form-label">
             Minimum Price: $ <span id="min-price-display">0</span>
         </label>
-        <input type="range" class="form-range" id="min-price" min="0" max="200" value="0" onchange="setMinPrice(this)">
+        <!-- CHANGED: max is now 500, onchange -> oninput -->
+        <input type="range" class="form-range" id="min-price"
+               min="0" max="500" value="0"
+               oninput="setMinPrice(this)">
     </div>
 
     <div>
         <label for="max-price" class="form-label">
-            Maximum Price: $ <span id="max-price-display">200</span>
+            Maximum Price: $ <span id="max-price-display">500</span>
         </label>
-        <input type="range" class="form-range" id="max-price" min="0" max="200" value="200" onchange="setMaxPrice(this)">
+
+        <input type="range" class="form-range" id="max-price"
+               min="0" max="500" value="500"
+               oninput="setMaxPrice(this)">
     </div>
 
     <div class="form-floating mb-3">

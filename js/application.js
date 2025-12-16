@@ -90,28 +90,66 @@ function setSubcategory(control)
     productService.search();
 
 }
+let priceTimer;
+function debouncedSearch() {
+    clearTimeout(priceTimer);
+    priceTimer = setTimeout(() => productService.search(), 200);
+}
 
 function setMinPrice(control)
 {
-    // const slider = document.getElementById("min-price");
-    const label = document.getElementById("min-price-display")
-    label.innerText = control.value;
+    // CHANGED: live label update
+    const minLabel = document.getElementById("min-price-display");
+    minLabel.innerText = control.value;
 
-    const value = control.value != 0 ? control.value : "";
-    productService.addMinPriceFilter(value)
-    productService.search();
+    // CHANGED: prevent min > max
+    const maxSlider = document.getElementById("max-price");
+    const maxLabel = document.getElementById("max-price-display");
 
-}
+    const minVal = Number(control.value);
+    let maxVal = Number(maxSlider.value);
+
+    if (minVal > maxVal) {
+        maxVal = minVal;
+        maxSlider.value = String(maxVal);
+        maxLabel.innerText = String(maxVal);
+    }
+    // CHANGED: default checks now use 500 (not 200)
+        const minFilter = (minVal !== 0) ? String(minVal) : "";
+        const maxFilter = (maxVal !== 500) ? String(maxVal) : "";
+
+        productService.addMinPriceFilter(minFilter);
+        productService.addMaxPriceFilter(maxFilter);
+
+        // CHANGED: debounced search (better with oninput)
+        debouncedSearch();
+    }
 
 function setMaxPrice(control)
 {
-    // const slider = document.getElementById("min-price");
-    const label = document.getElementById("max-price-display")
-    label.innerText = control.value;
+    // CHANGED: prevent max < min
+        const minSlider = document.getElementById("min-price");
+        const minVal = Number(minSlider.value);
 
-    const value = control.value != 200 ? control.value : "";
-    productService.addMaxPriceFilter(value)
-    productService.search();
+        let maxVal = Number(control.value);
+        if (maxVal < minVal) {
+            maxVal = minVal;
+            control.value = String(maxVal);
+        }
+
+        // CHANGED: live label update
+        const maxLabel = document.getElementById("max-price-display");
+        maxLabel.innerText = String(maxVal);
+
+        // CHANGED: default checks now use 500 (not 200)
+        const minFilter = (minVal !== 0) ? String(minVal) : "";
+        const maxFilter = (maxVal !== 500) ? String(maxVal) : "";
+
+        productService.addMinPriceFilter(minFilter);
+        productService.addMaxPriceFilter(maxFilter);
+
+        // CHANGED: debounced search (better with oninput)
+        debouncedSearch();
 
 }
 
