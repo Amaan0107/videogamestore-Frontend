@@ -276,3 +276,105 @@ main > .content-form .cart-item
     justify-content: flex-start;
     margin-top: 12px;
 }
+body {
+    background: #0b0b0b;
+    color: #f1f1f1; /* default text on dark background */
+}
+
+/* Make the main app content sit on a white surface */
+#main {
+    background: #ffffff;
+    color: #111111;
+    border-radius: 14px;
+    padding: 18px;
+    margin: 16px;
+    min-height: calc(100vh - 120px);
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+/* Your filter box should stay readable */
+.filter-box {
+    background: #ffffff;
+    color: #111111;
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+}
+/* Make form labels readable on white */
+.form-label, label {
+    color: #111111;
+}
+
+/* Navbar / header readability on dark background */
+header, nav, .navbar {
+    background: #0b0b0b !important;
+    color: #f1f1f1 !important;
+}
+
+.navbar a, nav a {
+    color: #f1f1f1 !important;
+}
+/* Error area stays visible */
+#errors {
+    position: fixed;
+    top: 11vh;
+    right: 16px;
+    width: 360px;
+    z-index: 9999;
+}
+/* CHANGED: keep outside page normal */
+body {
+  background: #f2f2f2;
+}
+
+/* CHANGED: only the inside app area (home/profile/cart content) is dark */
+main#main {
+  background: #0b0b0b;
+  border-radius: 14px;
+  padding: 18px;
+  margin: 16px;
+}
+
+/* Home filter stays white */
+.filter-box {
+  background: #ffffff;
+  color: #111;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+}
+/* Profile/Cart main content stays white and readable */
+.content-form {
+  background: #ffffff;
+  color: #111;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+/* CHANGED: hide the empty sidebar box on profile/cart */
+.filter-box.spacer {
+  display: none;
+}
+/* CHANGED: hide empty sidebars on profile/cart */
+.filter-box.spacer {
+  display: none !important;
+}
+
+/* CHANGED: make profile/cart use full width */
+.content-form {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+/* Cart should be full width */
+.cart-page {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+/* If the sidebar exists but is empty (cart/profile), hide it */
+main#main > .filter-box:empty {
+  display: none !important;
+}
+
+/* Keep your cart/profile content full width */
+main#main > .content-form {
+  grid-column: 1 / -1;
+  width: 100%;
+}
