@@ -9,6 +9,22 @@
         </select>
         <label for="category-select">Category</label>
     </div>
+    <div class="form-floating mb-3">
+        <select id="subcategory-select" class="form-select" onchange="setSubcategory(this)">
+            <option value="">Show All</option>
+            <option>Action</option>
+            <option>Adventure</option>
+            <option>RPG</option>
+            <option>Sports</option>
+            <option>Racing</option>
+            <option>Shooter</option>
+            <option>Fighting</option>
+            <option>Strategy</option>
+            <option>Simulation</option>
+            <option>Puzzle</option>
+        </select>
+        <label for="subcategory-select">Genre</label>
+    </div>
 
     <div>
         <label for="min-price" class="form-label">
@@ -29,25 +45,24 @@
                min="0" max="1000" value="1000"
                oninput="setMaxPrice(this)">
     </div>
-
-    <div class="form-floating mb-3">
-        <select name="" id="subcategory-select" class="form-select"
-                onchange="setSubcategory(this)"
-        >
-            <option value="">Show All</option>
-            <option>Action</option>
-            <option>Adventure</option>
-            <option>RPG</option>
-            <option>Sports</option>
-            <option>Racing</option>
-            <option>Shooter</option>
-            <option>Fighting</option>
-            <option>Strategy</option>
-            <option>Simulation</option>
-            <option>Puzzle</option>
-        </select>
-        <label for="subcategory-select">Genre</label>
-    </div>
+<!--    <div class="form-floating mb-3">-->
+<!--        <select name="" id="subcategory-select" class="form-select"-->
+<!--                onchange="setSubcategory(this)"-->
+<!--        >-->
+<!--            <option value="">Show All</option>-->
+<!--            <option>Action</option>-->
+<!--            <option>Adventure</option>-->
+<!--            <option>RPG</option>-->
+<!--            <option>Sports</option>-->
+<!--            <option>Racing</option>-->
+<!--            <option>Shooter</option>-->
+<!--            <option>Fighting</option>-->
+<!--            <option>Strategy</option>-->
+<!--            <option>Simulation</option>-->
+<!--            <option>Puzzle</option>-->
+<!--        </select>-->
+<!--        <label for="subcategory-select">Genre</label>-->
+<!--    </div>-->
 
 </div>
 <div id="content" class="content"></div>

@@ -17,6 +17,9 @@ class ShoppingCartService {
                 this.setCart(response.data)
 
                 this.updateCartDisplay()
+                const t = document.getElementById("cart-toast");
+                  t.style.display = "block";
+                  setTimeout(() => t.style.display = "none", 1200);
 
             })
             .catch(error => {
