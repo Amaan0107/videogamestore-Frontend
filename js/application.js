@@ -116,7 +116,7 @@ function setMinPrice(control)
     }
     // CHANGED: default checks now use 500 (not 200)
         const minFilter = (minVal !== 0) ? String(minVal) : "";
-        const maxFilter = (maxVal !== 1000) ? String(maxVal) : "";
+        const maxFilter = (maxVal !== 3000) ? String(maxVal) : "";
 
         productService.addMinPriceFilter(minFilter);
         productService.addMaxPriceFilter(maxFilter);
@@ -143,7 +143,7 @@ function setMaxPrice(control)
 
         // CHANGED: default checks now use 500 (not 200)
         const minFilter = (minVal !== 0) ? String(minVal) : "";
-        const maxFilter = (maxVal !== 1000) ? String(maxVal) : "";
+        const maxFilter = (maxVal !== 3000) ? String(maxVal) : "";
 
         productService.addMinPriceFilter(minFilter);
         productService.addMaxPriceFilter(maxFilter);
