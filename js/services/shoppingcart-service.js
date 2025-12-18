@@ -163,6 +163,9 @@ class ShoppingCartService {
                  }
 
                  this.updateCartDisplay()
+                 document.getElementById("errors").innerHTML = "";
+                     templateBuilder.append("message", { message: "Cleared cart." }, "errors");
+                     setTimeout(() => document.getElementById("errors").innerHTML = "", 2000);
                  this.loadCartPage()
 
              })
