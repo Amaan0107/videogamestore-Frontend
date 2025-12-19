@@ -378,3 +378,20 @@ main#main > .content-form {
   grid-column: 1 / -1;
   width: 100%;
 }
+/* Force price text to black */
+.price,
+.product-price,
+.item-price,
+.cart-price,
+.card .price,
+.product .price,
+.product-card .price {
+  color: #000 !important;
+}
+
+/* If your prices are green because of Bootstrap "text-success" */
+.card .text-success,
+.product .text-success,
+.product-card .text-success {
+  color: #000 !important;
+}

@@ -1,0 +1,41 @@
+<div id="register-form" class="modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Create Account</h5>
+                <button type="button" class="btn-close" onclick="hideModalForm()" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="reg-username" placeholder="Username" />
+                    <label for="reg-username">Username</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="password" class="form-control" id="reg-password" placeholder="Password" />
+                    <label for="reg-password">Password</label>
+                </div>
+
+                <div class="form-floating mb-2">
+                    <input type="password" class="form-control" id="reg-confirm" placeholder="Confirm Password" />
+                    <label for="reg-confirm">Confirm Password</label>
+                </div>
+
+                <div id="reg-msg" style="margin-top:10px;"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="showLoginForm()">
+                    Back
+                </button>
+
+                <button type="button" class="btn btn-primary" onclick="registerAccount()">
+                    Create Account
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
