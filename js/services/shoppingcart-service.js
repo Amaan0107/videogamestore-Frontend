@@ -20,7 +20,7 @@ class ShoppingCartService {
   }
 
   _findItem(productId) {
-    return this.cart.items.find(i => i?.product?.productId === productId);
+    return this.cart.items.find((i) => i?.product?.productId === productId);
   }
 
   _toast(msg) {
@@ -37,6 +37,10 @@ class ShoppingCartService {
       const e = document.getElementById("errors");
       if (e) e.innerHTML = "";
     }, 1800);
+  }
+
+  _flashError(msg) {
+    templateBuilder.append("error", { error: msg }, "errors");
   }
 
   // ---------- Cart I/O ----------
@@ -72,7 +76,7 @@ class ShoppingCartService {
         return this.cart;
       })
       .catch(() => {
-        templateBuilder.append("error", { error: "Load cart failed." }, "errors");
+        this._flashError("Load cart failed.");
         return this.cart;
       });
   }
@@ -80,7 +84,7 @@ class ShoppingCartService {
   // ---------- Actions ----------
   addToCart(productId, quantity = 1, stock = 999999) {
     if (!userService.isLoggedIn()) {
-      templateBuilder.append("error", { error: "Please log in to add items to your cart." }, "errors");
+      this._flashError("Please log in to add items to your cart.");
       return;
     }
 
@@ -89,27 +93,25 @@ class ShoppingCartService {
     const maxAllowed = this._maxAllowed(stock);
 
     if (maxAllowed === 0) {
-      templateBuilder.append("error", { error: "This item is out of stock." }, "errors");
+      this._flashError("This item is out of stock.");
       return;
     }
 
     const url = `${config.baseUrl}/cart/products/${pid}`;
 
-    // Refresh cart first so we can add (existing + requested) safely
     this.loadCart()
       .then(() => {
         const existingItem = this._findItem(pid);
         const existingQty = existingItem ? this._toInt(existingItem.quantity, 0) : 0;
-
-        // target quantity = existing + requested, capped by maxAllowed
         const targetQty = Math.min(existingQty + requested, maxAllowed);
 
         if (targetQty === existingQty) {
-          this._flashMessage(`Only ${maxAllowed} available per customer (limited by stock and max 3).`);
+          this._flashMessage(
+            `Only ${maxAllowed} available per customer (limited by stock and max 3).`
+          );
           return;
         }
 
-        // If not yet in cart: POST once (creates row at qty=1), then PUT to set target
         if (!existingItem) {
           return axios.post(url, {}).then(() => {
             if (targetQty > 1) {
@@ -118,25 +120,24 @@ class ShoppingCartService {
           });
         }
 
-        // Already in cart: PUT to the new quantity
         return axios.put(url, { quantity: targetQty });
       })
       .then(() => this.loadCart())
       .then(() => {
         this.updateCartDisplay();
-        try { this.loadCartPage(); } catch (e) {}
-
-        // Always remind of the cap (your request)
+        try {
+          this.loadCartPage();
+        } catch (e) {}
         this._toast("Added to cart! (Limit: 3 per customer)");
       })
       .catch(() => {
-        templateBuilder.append("error", { error: "Add to cart failed." }, "errors");
+        this._flashError("Add to cart failed.");
       });
   }
 
   updateQuantity(productId, quantity, stock = 999999) {
     if (!userService.isLoggedIn()) {
-      templateBuilder.append("error", { error: "Please log in to update your cart." }, "errors");
+      this._flashError("Please log in to update your cart.");
       return;
     }
 
@@ -145,7 +146,7 @@ class ShoppingCartService {
     const maxAllowed = this._maxAllowed(stock);
 
     if (maxAllowed === 0) {
-      templateBuilder.append("error", { error: "This item is out of stock." }, "errors");
+      this._flashError("This item is out of stock.");
       return;
     }
 
@@ -160,7 +161,9 @@ class ShoppingCartService {
         this.loadCartPage();
 
         if (requested !== clamped) {
-          this._flashMessage(`Quantity adjusted to ${clamped}. (Limit: 3 per customer and cannot exceed stock)`);
+          this._flashMessage(
+            `Quantity adjusted to ${clamped}. (Limit: 3 per customer and cannot exceed stock)`
+          );
         } else {
           this._toast("Cart updated! (Limit: 3 per customer)");
         }
@@ -170,13 +173,13 @@ class ShoppingCartService {
           error?.response?.status === 404
             ? "That item isn't in your cart yet."
             : "Update quantity failed.";
-        templateBuilder.append("error", { error: msg }, "errors");
+        this._flashError(msg);
       });
   }
 
   clearCart() {
     if (!userService.isLoggedIn()) {
-      templateBuilder.append("error", { error: "Please log in to clear your cart." }, "errors");
+      this._flashError("Please log in to clear your cart.");
       return;
     }
 
@@ -199,8 +202,195 @@ class ShoppingCartService {
         this.loadCartPage();
       })
       .catch(() => {
-        templateBuilder.append("error", { error: "Empty cart failed." }, "errors");
+        this._flashError("Empty cart failed.");
       });
+  }
+
+  // ---------- CHECKOUT / ORDER ----------
+  placeOrder() {
+    if (!userService.isLoggedIn()) {
+      this._flashError("Please log in to place an order.");
+      return;
+    }
+
+    if (!this.cart.items || this.cart.items.length === 0) {
+      this._flashError("Your cart is empty.");
+      return;
+    }
+
+    const cartSnapshot = JSON.parse(JSON.stringify(this.cart));
+
+    axios
+      .get(`${config.baseUrl}/profile`)
+      .then((res) => res.data)
+      .then((profile) => {
+        const missing =
+          !profile?.email ||
+          !profile?.phone ||
+          !profile?.address ||
+          !profile?.city ||
+          !profile?.state ||
+          !profile?.zip;
+
+        if (missing) {
+          this._flashError(
+            "Please complete your Profile (email, phone, address, city, state, zip) before checkout."
+          );
+          throw new Error("MISSING_PROFILE_FIELDS");
+        }
+
+        return axios
+          .post(`${config.baseUrl}/orders`, {})
+          .then((orderRes) => ({ order: orderRes.data, profile }));
+      })
+      .then(({ order, profile }) => {
+        this._showOrderConfirmation(order, profile, cartSnapshot);
+        return this.loadCart().then(() => this.updateCartDisplay());
+      })
+      .catch((err) => {
+        if (err?.message === "MISSING_PROFILE_FIELDS") return;
+
+        const msg =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Checkout failed. (Make sure POST /orders works in your backend.)";
+        this._flashError(msg);
+      });
+  }
+
+  // ✅ FULL PAGE CONFIRMATION (updated)
+  _showOrderConfirmation(order, profile, cartSnapshot) {
+    const main = document.getElementById("main");
+    if (!main) return;
+
+    // Make main full width (removes boxed layout behavior)
+    main.innerHTML = "";
+    main.style.padding = "0";
+    main.style.margin = "0";
+
+    const orderId = order?.orderId ?? order?.id ?? order?.order_id ?? "(unknown)";
+
+    const shipName =
+      `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
+      userService.getUserName();
+
+    const shipAddress = profile?.address ?? "";
+    const shipCity = profile?.city ?? "";
+    const shipState = profile?.state ?? "";
+    const shipZip = profile?.zip ?? "";
+
+    const emailDisplay = profile?.email ?? "(no email)";
+    const phoneDisplay = profile?.phone ?? "(no phone)";
+
+    // Use backend lineItems if present; else use cart snapshot
+    let items = [];
+    if (Array.isArray(order?.lineItems) && order.lineItems.length > 0) {
+      items = order.lineItems.map((li) => {
+        const name = li.product?.name ?? `Product ${li.productId}`;
+        const qty = this._toInt(li.quantity, 0);
+        const unit = this._toNumber(li.salesPrice ?? li.price ?? 0, 0);
+        return { name, qty, unit, lineTotal: unit * qty };
+      });
+    } else {
+      items = (cartSnapshot?.items ?? []).map((ci) => {
+        const name = ci.product?.name ?? "Item";
+        const qty = this._toInt(ci.quantity, 0);
+        const unit = this._toNumber(ci.product?.price, 0);
+        return { name, qty, unit, lineTotal: unit * qty };
+      });
+    }
+
+    const subtotalNum = items.reduce((sum, x) => sum + (x.lineTotal || 0), 0);
+    const shippingNum = this._toNumber(order?.shippingAmount, 0);
+
+    const totalNum =
+      Number.isFinite(this._toNumber(order?.orderTotal, NaN))
+        ? this._toNumber(order?.orderTotal, subtotalNum + shippingNum)
+        : this._toNumber(cartSnapshot?.total, subtotalNum + shippingNum);
+
+    const itemsRows = items
+      .map(
+        (x) => `
+        <tr>
+          <td>${x.name}</td>
+          <td class="text-end">$${x.unit.toFixed(2)}</td>
+          <td class="text-end">${x.qty}</td>
+          <td class="text-end">$${x.lineTotal.toFixed(2)}</td>
+        </tr>
+      `
+      )
+      .join("");
+
+    // Full-width container (no max width, no rounded box)
+    const wrap = document.createElement("div");
+    wrap.className = "content-form";
+    wrap.style.width = "100%";
+    wrap.style.maxWidth = "none";
+    wrap.style.margin = "0";
+    wrap.style.borderRadius = "0";
+    wrap.style.padding = "32px";
+    wrap.style.minHeight = "calc(100vh - 70px)"; // adjust if your header height differs
+    wrap.style.boxSizing = "border-box";
+
+    wrap.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px;">
+        <h1 style="margin:0;">Order Confirmed</h1>
+        <span style="font-size:28px;">✅</span>
+      </div>
+
+      <div style="margin-top:10px;">
+        <div style="font-weight:700;">Order # ${orderId}</div>
+        <div style="margin-top:6px;">
+          We emailed your receipt to <strong>${emailDisplay}</strong> and texted updates to <strong>${phoneDisplay}</strong>.
+        </div>
+      </div>
+
+      <div style="display:flex; gap: 40px; flex-wrap: wrap; margin-top: 28px;">
+        <div style="flex: 1; min-width: 320px;">
+          <h3 style="margin-bottom:10px;">Shipping To</h3>
+          <div style="font-weight:700;">${shipName}</div>
+          <div>${shipAddress}</div>
+          <div>${shipCity}, ${shipState} ${shipZip}</div>
+        </div>
+
+        <div style="flex: 1; min-width: 320px;">
+          <h3 style="margin-bottom:10px;">Order Summary</h3>
+
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>Subtotal</span><span>$${subtotalNum.toFixed(2)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span>Shipping</span><span>$${shippingNum.toFixed(2)}</span>
+          </div>
+          <hr />
+          <div style="display:flex; justify-content:space-between; font-size: 1.2em; margin-top:10px;">
+            <strong>Total</strong><strong>$${totalNum.toFixed(2)}</strong>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 34px;">Items</h3>
+      <table class="table table-striped" style="width:100%;">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="text-end">Unit</th>
+            <th class="text-end">Qty</th>
+            <th class="text-end">Line Total</th>
+          </tr>
+        </thead>
+        <tbody>${itemsRows}</tbody>
+      </table>
+
+      <div style="margin-top: 22px;">
+        <button id="continue-shopping" class="btn btn-primary">CONTINUE SHOPPING</button>
+      </div>
+    `;
+
+    main.appendChild(wrap);
+
+    const btn = document.getElementById("continue-shopping");
+    if (btn) btn.addEventListener("click", () => loadHome());
   }
 
   // ---------- UI ----------
@@ -233,18 +423,24 @@ class ShoppingCartService {
     h1.innerText = "Cart";
     cartHeader.appendChild(h1);
 
-    // Total (updates whenever loadCartPage runs)
     const totalEl = document.createElement("div");
     totalEl.style.marginLeft = "auto";
     totalEl.style.fontWeight = "600";
     totalEl.innerText = `Total: $${this._toNumber(this.cart.total, 0).toFixed(2)}`;
     cartHeader.appendChild(totalEl);
 
-    const button = document.createElement("button");
-    button.classList.add("btn", "btn-danger");
-    button.innerText = "Clear";
-    button.addEventListener("click", () => this.clearCart());
-    cartHeader.appendChild(button);
+    const placeOrderBtn = document.createElement("button");
+    placeOrderBtn.classList.add("btn", "btn-success");
+    placeOrderBtn.style.marginLeft = "8px";
+    placeOrderBtn.innerText = "Place Order";
+    placeOrderBtn.addEventListener("click", () => this.placeOrder());
+    cartHeader.appendChild(placeOrderBtn);
+
+    const clearBtn = document.createElement("button");
+    clearBtn.classList.add("btn", "btn-danger");
+    clearBtn.innerText = "Clear";
+    clearBtn.addEventListener("click", () => this.clearCart());
+    cartHeader.appendChild(clearBtn);
 
     contentDiv.appendChild(cartHeader);
     main.appendChild(contentDiv);
@@ -289,11 +485,9 @@ class ShoppingCartService {
     stockInfo.innerText = `In stock: ${item.product.stock}`;
     outerDiv.appendChild(stockInfo);
 
-    // ---- Price block (Unit + Qty + Line Total) ----
     const unitPrice = this._toNumber(item.product.price, 0);
     const qty = this._toInt(item.quantity, 0);
 
-    // Prefer backend-provided lineTotal if present, else compute
     const computedLineTotal = unitPrice * qty;
     const lineTotal =
       item.lineTotal != null ? this._toNumber(item.lineTotal, computedLineTotal) : computedLineTotal;
@@ -307,7 +501,6 @@ class ShoppingCartService {
     `;
     outerDiv.appendChild(priceBox);
 
-    // ---- Quantity controls (respect max 3 + stock) ----
     const qtyRow = document.createElement("div");
     qtyRow.style.display = "flex";
     qtyRow.style.alignItems = "center";
